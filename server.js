@@ -22,14 +22,22 @@ app.use(express.static(distFolder, {
   }
 }));
 
-// Fallback: todas as rotas GET não correspondidas anteriormente redirecionam para index.html
-// Corrigido '/*' para '*'
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distFolder, 'index.html'));
+// Fallback: Handle SPA routing by sending index.html for non-file GET requests
+app.use((req, res, next) => {
+  // Check if it's a GET request and if the client accepts HTML
+  if (req.method === 'GET' && req.accepts('html') && !req.path.includes('.')) {
+     // If it looks like a route request (no file extension), send index.html
+    res.sendFile(path.join(distFolder, 'index.html'));
+  } else {
+     // Otherwise, let other middleware/handlers handle it (like 404)
+    next();
+  }
 });
+
 
 // Porta padrão
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Angular app rodando em http://localhost:${PORT}`);
 });
+
