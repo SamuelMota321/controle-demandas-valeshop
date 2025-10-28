@@ -22,10 +22,11 @@ app.use(express.static(distFolder, {
   }
 }));
 
-// Fallback: todas as rotas SPA redirecionam para index.html
-app.get('*', (req, res) => {
+// Fallback SPA (todas as rotas que não forem arquivos estáticos)
+app.get('/*', (req, res) => {
   res.sendFile(path.join(distFolder, 'index.html'));
 });
+
 
 // Porta padrão
 const PORT = process.env.PORT || 4000;
