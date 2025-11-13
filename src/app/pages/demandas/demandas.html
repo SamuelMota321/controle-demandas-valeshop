@@ -1,12 +1,46 @@
 <div class="search-bar">
   <label for="search">Suas Demandas:</label>
-  <input 
-    type="text" 
-    placeholder="Pesquisar por título, responsável ou status" 
-    [(ngModel)]="termoBusca" 
-    (input)="filtrarDemandas()" 
-  />
+  <input type="text" placeholder="Pesquisar por título, responsável ou status" [(ngModel)]="termoBusca"
+    (input)="filtrarDemandas()" />
 </div>
+
+<!-- @if(isAdmin) { -->
+<div class="filtros-container">
+  <div class="filtro-item">
+    <select [(ngModel)]="filtros.funcionarioId">
+      <option value="todos">Todos Funcionários</option>
+      @for(usuario of usuarios; track usuario.id) {
+      <option [value]="usuario.id">{{ getNomeAbreviado(usuario.email) }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro-item">
+    <select [(ngModel)]="filtros.prioridade">
+      <option value="todas">Todas Prioridades</option>
+      <option value="1">1ª</option>
+      <option value="2">2ª</option>
+      <option value="3">3ª</option>
+      <option value="4">4ª</option>
+      <option value="5">5ª</option>
+      <option value="6">6ª</option>
+      <option value="7">7ª</option>
+      <option value="8">8ª</option>
+      <option value="9">9ª</option>
+      <option value="10">10ª</option>
+    </select>
+  </div>
+  <div class="filtro-item">
+    <label for="dataInicio">De:</label>
+    <input type="date" id="dataInicio" [(ngModel)]="filtros.dataInicio" />
+  </div>
+  <div class="filtro-item">
+    <label for="dataFim">Até:</label>
+    <input type="date" id="dataFim" [(ngModel)]="filtros.dataFim" />
+  </div>
+  <button class="btn btn-aplicar" (click)="aplicarFiltros()">Aplicar</button>
+  <button class="btn btn-limpar" (click)="limparFiltros()">Limpar Filtro</button>
+</div>
+<!-- } -->
 
 <!-- Usando a nova sintaxe de control flow -->
 @if (isLoading) {
@@ -28,7 +62,8 @@
     </h2>
     <div class="demanda-info">
       <span>Prioridade: <b>{{ demanda.priority }}</b></span>
-      <span>Status: <span class="status-badge status-{{demanda.status | lowercase | replace: ' ': '-'}}">{{ demanda.status }}</span></span>
+      <span>Status: <span class="status-badge status-{{demanda.status | lowercase | replace: ' ': '-'}}">{{
+          demanda.status }}</span></span>
       <span>Criada em: <b>{{ demanda.createdAt | date : 'dd/MM/yyyy' }}</b></span>
       <span>Prazo: <b>{{ demanda.date | date : 'dd/MM/yyyy' }}</b></span>
       <span>Responsável: <b>{{ demanda.owner | titlecase }}</b></span>
@@ -47,25 +82,25 @@
     </div>
   </div>
 </app-container>
-} 
+}
 
 <!-- Controles de Paginação -->
 @if (demandasFiltradas.length > itensPorPagina) {
-  <div class="paginacao-container">
-    <button (click)="paginaAnterior()" [disabled]="paginaAtual === 1">Anterior</button>
-    @for(pagina of getPaginas(); track pagina) {
-      <button (click)="irParaPagina(pagina)" [class.active]="pagina === paginaAtual">{{ pagina }}</button>
-    }
-    <button (click)="proximaPagina()" [disabled]="paginaAtual === totalPaginas()">Próxima</button>
-  </div>
+<div class="paginacao-container">
+  <button (click)="paginaAnterior()" [disabled]="paginaAtual === 1">Anterior</button>
+  @for(pagina of getPaginas(); track pagina) {
+  <button (click)="irParaPagina(pagina)" [class.active]="pagina === paginaAtual">{{ pagina }}</button>
+  }
+  <button (click)="proximaPagina()" [disabled]="paginaAtual === totalPaginas()">Próxima</button>
+</div>
 }
 
 
 @if(demandasPaginadas.length === 0 && demandas.length > 0) {
-  <div class="empty-state-container">
-    <h2>Nenhum resultado encontrado</h2>
-    <p>Nenhuma demanda corresponde à sua busca.</p>
-  </div>
+<div class="empty-state-container">
+  <h2>Nenhum resultado encontrado</h2>
+  <p>Nenhuma demanda corresponde à sua busca.</p>
+</div>
 }
 } }
 @if (isModalOpen) {

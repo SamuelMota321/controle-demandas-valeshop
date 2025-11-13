@@ -8,27 +8,6 @@ import { FormsModule } from '@angular/forms';
 import { ReplacePipe } from '../../util/replace.pipe';
 import { forkJoin } from 'rxjs';
 
-interface Demanda {
-  id: number;
-  title: string;
-  priority: number;
-  status: string;
-  date: string; // Deadline
-  createdAt: string; // Creation date
-  completionDate?: string;
-  description: string;
-  owner: string;
-  gitLink: string;
-  problems: string[] | null;
-  observations: string[] | null;
-  comments: string[] | null;
-}
-
-interface User {
-  id: number;
-  email: string;
-  userType: string;
-}
 
 @Component({
   selector: 'app-dashboard',

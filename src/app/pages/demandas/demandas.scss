@@ -30,6 +30,29 @@
   background-color: #d6d6d6;
 }
 
+// Filtros
+.filtros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filtro-item select,
+.filtro-item input {
+  padding: 0.6rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  background-color: #f7f7f7;
+  font-size: 0.9rem;
+  outline: none;
+}
+
 .demanda-card {
   padding: 16px;
   font-family: Arial, sans-serif;

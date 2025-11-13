@@ -30,12 +30,20 @@ export class Demandas implements OnInit, OnDestroy {
   demandas: any[] = [];
   demandasFiltradas: any[] = [];
   demandasPaginadas: any[] = [];
+  usuarios: User[] = [];
   termoBusca = '';
   isLoading = true;
   isModalOpen = false;
   demandaParaExcluir: number | null = null;
   isAdmin = false;
   private authSubscription: Subscription | undefined;
+
+  filtros = {
+    funcionarioId: 'todos',
+    prioridade: 'todas',
+    dataInicio: '',
+    dataFim: ''
+  };
 
   paginaAtual = 1;
   itensPorPagina = 5;
@@ -96,7 +104,7 @@ export class Demandas implements OnInit, OnDestroy {
         demanda.status.toLowerCase().includes(termo)
       );
     }
-    this.paginaAtual = 1; // Reseta para a primeira página ao filtrar
+    this.paginaAtual = 1; 
     this.atualizarPaginacao();
   }
 
@@ -165,6 +173,59 @@ export class Demandas implements OnInit, OnDestroy {
 
   verMais(demandaId: number): void {
     this.router.navigate(['/ver-mais', demandaId]);
+  }
+
+
+  aplicarFiltros(): void {
+    let demandasResultantes = [...this.demandas];
+
+    if (this.filtros.funcionarioId !== 'todos') {
+      const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
+      if (selectedUser) {
+        const ownerName = selectedUser.email.split('@')[0];
+        demandasResultantes = demandasResultantes.filter(d => d.owner === ownerName);
+      }
+    }
+
+    if (this.filtros.prioridade !== 'todas') {
+      demandasResultantes = demandasResultantes.filter(d => d.priority === Number(this.filtros.prioridade));
+    }
+
+    if (this.filtros.dataInicio || this.filtros.dataFim) {
+      const dataInicio = this.filtros.dataInicio ? new Date(this.filtros.dataInicio) : null;
+      const dataFim = this.filtros.dataFim ? new Date(this.filtros.dataFim) : null;
+
+      if(dataInicio) dataInicio.setHours(0, 0, 0, 0);
+      if(dataFim) dataFim.setHours(23, 59, 59, 999);
+
+      demandasResultantes = demandasResultantes.filter(d => {
+        const dataDemanda = new Date(d.createdAt);
+        
+        const afterStart = dataInicio ? dataDemanda >= dataInicio : true;
+        const beforeEnd = dataFim ? dataDemanda <= dataFim : true;
+        
+        return afterStart && beforeEnd;
+      });
+    }
+
+    this.demandasFiltradas = demandasResultantes;
+    this.paginaAtual = 1;
+  }
+  
+  limparFiltros(): void {
+    this.filtros = {
+      funcionarioId: 'todos',
+      prioridade: 'todas',
+      dataInicio: '',
+      dataFim: ''
+    };
+    this.aplicarFiltros();
+  }
+
+  getNomeAbreviado(name: string | null | undefined): string {
+    if (!name) return 'N/A';
+    const nome = name.split('@')[0];
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
   }
 }
 
