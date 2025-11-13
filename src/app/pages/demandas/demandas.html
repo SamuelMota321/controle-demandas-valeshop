@@ -1,9 +1,3 @@
-<div class="search-bar">
-  <label for="search">Suas Demandas:</label>
-  <input type="text" placeholder="Pesquisar por título, responsável ou status" [(ngModel)]="termoBusca"
-    (input)="filtrarDemandas()" />
-</div>
-
 <!-- @if(isAdmin) { -->
 <div class="filtros-container">
   <div class="filtro-item">
@@ -41,6 +35,14 @@
   <button class="btn btn-limpar" (click)="limparFiltros()">Limpar Filtro</button>
 </div>
 <!-- } -->
+
+
+<div class="search-bar">
+  <label for="search">Suas Demandas:</label>
+  <input type="text" placeholder="Pesquisar por título, responsável ou status" [(ngModel)]="termoBusca"
+    (input)="filtrarDemandas()" />
+</div>
+
 
 <!-- Usando a nova sintaxe de control flow -->
 @if (isLoading) {
