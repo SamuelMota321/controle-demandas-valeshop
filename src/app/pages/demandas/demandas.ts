@@ -12,6 +12,11 @@ import { take, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { ReplacePipe } from '../../util/replace.pipe';
 
+interface User {
+  id: number;
+  email: string;
+  userType: string;
+}
 @Component({
   selector: 'app-demandas',
   standalone: true,
@@ -31,7 +36,7 @@ export class Demandas implements OnInit, OnDestroy {
   demandas: any[] = [];
   demandasFiltradas: any[] = [];
   demandasPaginadas: any[] = [];
-  usuarios: User[] = [];
+  usuarios: User[] = []; // Agora 'User' está definido
   termoBusca = '';
   isLoading = true;
   isModalOpen = false;
@@ -63,7 +68,7 @@ export class Demandas implements OnInit, OnDestroy {
       take(1) 
     ).subscribe(user => {
       this.isAdmin = user?.userType?.toLowerCase() === 'administrador';
-      this.loadDemandas();
+      this.loadDadosIniciais(); // Renomeado para carregar tudo
     });
   }
 
@@ -73,42 +78,69 @@ export class Demandas implements OnInit, OnDestroy {
     }
   }
 
-  loadDemandas(): void {
+  loadDadosIniciais(): void {
     this.isLoading = true;
 
-    const observables: { demandas: Observable<any>, usuarios?: Observable<any> } = {
-      demandas: this.isAdmin
-        ? this.painelService.getAllDemandRecord()
-        : this.painelService.getUserAllDemandRecord()
-    };
+    // Determina qual observable de demandas usar
+    const demandas$ = this.isAdmin
+      ? this.painelService.getAllDemandRecord()
+      : this.painelService.getUserAllDemandRecord();
 
-    if (this.isAdmin) {
-      observables.usuarios = this.painelService.getAllUsers();
-    }
-
-    forkJoin(observables).subscribe({
-      next: (data: any) => { 
-        this.demandas = data.demandas || [];
-        if (this.isAdmin && data.usuarios) {
-          this.usuarios = data.usuarios || []; 
+    // Carrega as demandas primeiro
+    demandas$.subscribe({
+      next: (demandasData) => {
+        this.demandas = demandasData || [];
+        
+        // Se for admin, carrega os usuários separadamente.
+        if (this.isAdmin) {
+          this.loadUsuarios();
+        } else {
+          // Se não for admin, não precisa esperar usuários, aplica filtros e para o loading.
+          this.aplicarTodosFiltros();
+          this.isLoading = false;
+          this.cdr.detectChanges();
         }
-        this.aplicarTodosFiltros(); 
-        this.isLoading = false;
-        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
-        this.toastr.error('Erro ao carregar dados.', 'Erro');
+        this.toastr.error('Erro ao carregar demandas.', 'Erro');
         this.cdr.detectChanges();
-      },
+      }
     });
   }
 
+  // Função separada para carregar usuários (apenas admin)
+  loadUsuarios(): void {
+    this.painelService.getAllUsers().subscribe({
+      next: (usuariosData) => {
+        this.usuarios = usuariosData || [];
+      },
+      error: (err) => {
+        // Se falhar, avisa o admin mas não impede a exibição das demandas
+        this.toastr.error('Erro ao carregar lista de funcionários. O filtro de funcionário pode não funcionar.', 'Aviso');
+        this.usuarios = []; // Garante que esteja vazio em caso de erro
+      },
+      complete: () => {
+        // Quando os usuários terminarem (com sucesso ou erro),
+        // aplica os filtros e para o loading.
+        this.aplicarTodosFiltros();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+
+  /**
+   * Função central que aplica AMBOS os filtros (admin e barra de busca)
+   */
   aplicarTodosFiltros(): void {
     let demandasResultantes = [...this.demandas];
 
+    // 1. Aplica Filtros de Admin (se for admin)
     if (this.isAdmin) {
-      if (this.filtros.funcionarioId !== 'todos') {
+      // Filtro de Funcionário
+      if (this.filtros.funcionarioId !== 'todos' && this.usuarios.length > 0) {
         const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
         if (selectedUser) {
           const ownerName = selectedUser.email.split('@')[0];
@@ -116,10 +148,12 @@ export class Demandas implements OnInit, OnDestroy {
         }
       }
 
+      // Filtro de Prioridade
       if (this.filtros.prioridade !== 'todas') {
         demandasResultantes = demandasResultantes.filter(d => d.priority === Number(this.filtros.prioridade));
       }
 
+      // Filtro de Data
       if (this.filtros.dataInicio || this.filtros.dataFim) {
         const dataInicio = this.filtros.dataInicio ? new Date(this.filtros.dataInicio) : null;
         const dataFim = this.filtros.dataFim ? new Date(this.filtros.dataFim) : null;
@@ -138,6 +172,7 @@ export class Demandas implements OnInit, OnDestroy {
       }
     }
     
+    // 2. Aplica Filtro da Barra de Busca (para todos)
     const termo = this.termoBusca.toLowerCase();
     if (termo) {
       demandasResultantes = demandasResultantes.filter(demanda =>
@@ -151,16 +186,28 @@ export class Demandas implements OnInit, OnDestroy {
     this.demandasFiltradas = demandasResultantes;
     this.paginaAtual = 1; 
     this.atualizarPaginacao();
+    this.cdr.detectChanges(); // Garante que a UI atualize após filtros
   }
 
+  /**
+   * Esta função agora apenas chama a função central
+   * (acionada pela barra de busca)
+   */
   filtrarDemandas(): void {
     this.aplicarTodosFiltros();
   }
   
+  /**
+   * Esta função agora apenas chama a função central
+   * (acionada pelo botão "Aplicar")
+   */
   aplicarFiltros(): void {
     this.aplicarTodosFiltros();
   }
   
+  /**
+   * Limpa os filtros de admin e reaplica a lógica
+   */
   limparFiltros(): void {
     this.filtros = {
       funcionarioId: 'todos',
@@ -168,6 +215,7 @@ export class Demandas implements OnInit, OnDestroy {
       dataInicio: '',
       dataFim: ''
     };
+    // Re-aplica os filtros (que agora só incluirão a barra de busca, se houver)
     this.aplicarTodosFiltros();
   }
 
@@ -220,12 +268,14 @@ export class Demandas implements OnInit, OnDestroy {
     this.painelService.deleteDemand(this.demandaParaExcluir).subscribe({
       next: () => {
         this.toastr.success('Demanda excluída com sucesso!', 'Sucesso');
+        // Remove a demanda da lista principal
         this.demandas = this.demandas.filter(
           (d) => d.id !== this.demandaParaExcluir
         );
+        // Re-aplica os filtros para atualizar a visualização
         this.aplicarTodosFiltros(); 
         this.fecharModal();
-        this.cdr.detectChanges();
+        // O cdr.detectChanges() já é chamado no final de aplicarTodosFiltros
       },
       error: (err) => {
         this.toastr.error('Erro ao excluir a demanda.', 'Erro');
