@@ -5,7 +5,8 @@ import { ToastrService } from 'ngx-toastr';
 import { ContainerModule } from '../../components/container/container.module';
 import { PainelService } from '../../services/painel.service';
 import { AuthService } from '../../services/auth.service';
-import { Observable, of, Subscription } from 'rxjs';
+// Importa o forkJoin para carregar múltiplos dados
+import { Observable, of, Subscription, forkJoin } from 'rxjs';
 import { ConfirmationModal } from './confirmation-modal/confirmation-modal';
 import { take, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
@@ -75,37 +76,99 @@ export class Demandas implements OnInit, OnDestroy {
   loadDemandas(): void {
     this.isLoading = true;
 
-    const demandas$: Observable<any> = this.isAdmin
-      ? this.painelService.getAllDemandRecord()
-      : this.painelService.getUserAllDemandRecord();
+    const observables: { demandas: Observable<any>, usuarios?: Observable<any> } = {
+      demandas: this.isAdmin
+        ? this.painelService.getAllDemandRecord()
+        : this.painelService.getUserAllDemandRecord()
+    };
 
-    demandas$.subscribe({
-      next: (data) => {
-        this.demandas = data || []; 
-        this.filtrarDemandas();
+    if (this.isAdmin) {
+      observables.usuarios = this.painelService.getAllUsers();
+    }
+
+    forkJoin(observables).subscribe({
+      next: (data: any) => { 
+        this.demandas = data.demandas || [];
+        if (this.isAdmin && data.usuarios) {
+          this.usuarios = data.usuarios || []; 
+        }
+        this.aplicarTodosFiltros(); 
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
+        this.toastr.error('Erro ao carregar dados.', 'Erro');
         this.cdr.detectChanges();
       },
     });
   }
 
-  filtrarDemandas(): void {
+  aplicarTodosFiltros(): void {
+    let demandasResultantes = [...this.demandas];
+
+    if (this.isAdmin) {
+      if (this.filtros.funcionarioId !== 'todos') {
+        const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
+        if (selectedUser) {
+          const ownerName = selectedUser.email.split('@')[0];
+          demandasResultantes = demandasResultantes.filter(d => d.owner === ownerName);
+        }
+      }
+
+      if (this.filtros.prioridade !== 'todas') {
+        demandasResultantes = demandasResultantes.filter(d => d.priority === Number(this.filtros.prioridade));
+      }
+
+      if (this.filtros.dataInicio || this.filtros.dataFim) {
+        const dataInicio = this.filtros.dataInicio ? new Date(this.filtros.dataInicio) : null;
+        const dataFim = this.filtros.dataFim ? new Date(this.filtros.dataFim) : null;
+
+        if(dataInicio) dataInicio.setHours(0, 0, 0, 0);
+        if(dataFim) dataFim.setHours(23, 59, 59, 999);
+
+        demandasResultantes = demandasResultantes.filter(d => {
+          const dataDemanda = new Date(d.createdAt);
+          
+          const afterStart = dataInicio ? dataDemanda >= dataInicio : true;
+          const beforeEnd = dataFim ? dataDemanda <= dataFim : true;
+          
+          return afterStart && beforeEnd;
+        });
+      }
+    }
+    
     const termo = this.termoBusca.toLowerCase();
-    if (!termo) {
-      this.demandasFiltradas = this.demandas;
-    } else {
-      this.demandasFiltradas = this.demandas.filter(demanda =>
+    if (termo) {
+      demandasResultantes = demandasResultantes.filter(demanda =>
         demanda.title.toLowerCase().includes(termo) ||
         (demanda.owner && demanda.owner.toLowerCase().includes(termo)) ||
         demanda.status.toLowerCase().includes(termo)
       );
     }
+
+    // Atualiza a lista final e a paginação
+    this.demandasFiltradas = demandasResultantes;
     this.paginaAtual = 1; 
     this.atualizarPaginacao();
+  }
+
+  filtrarDemandas(): void {
+    this.aplicarTodosFiltros();
+  }
+  
+  aplicarFiltros(): void {
+    this.aplicarTodosFiltros();
+  }
+  
+  limparFiltros(): void {
+    this.filtros = {
+      funcionarioId: 'todos',
+      prioridade: 'todas',
+      dataInicio: '',
+      dataFim: ''
+    };
+    this.aplicarTodosFiltros();
   }
 
   atualizarPaginacao(): void {
@@ -160,7 +223,7 @@ export class Demandas implements OnInit, OnDestroy {
         this.demandas = this.demandas.filter(
           (d) => d.id !== this.demandaParaExcluir
         );
-        this.filtrarDemandas();
+        this.aplicarTodosFiltros(); 
         this.fecharModal();
         this.cdr.detectChanges();
       },
@@ -176,56 +239,9 @@ export class Demandas implements OnInit, OnDestroy {
   }
 
 
-  aplicarFiltros(): void {
-    let demandasResultantes = [...this.demandas];
-
-    if (this.filtros.funcionarioId !== 'todos') {
-      const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
-      if (selectedUser) {
-        const ownerName = selectedUser.email.split('@')[0];
-        demandasResultantes = demandasResultantes.filter(d => d.owner === ownerName);
-      }
-    }
-
-    if (this.filtros.prioridade !== 'todas') {
-      demandasResultantes = demandasResultantes.filter(d => d.priority === Number(this.filtros.prioridade));
-    }
-
-    if (this.filtros.dataInicio || this.filtros.dataFim) {
-      const dataInicio = this.filtros.dataInicio ? new Date(this.filtros.dataInicio) : null;
-      const dataFim = this.filtros.dataFim ? new Date(this.filtros.dataFim) : null;
-
-      if(dataInicio) dataInicio.setHours(0, 0, 0, 0);
-      if(dataFim) dataFim.setHours(23, 59, 59, 999);
-
-      demandasResultantes = demandasResultantes.filter(d => {
-        const dataDemanda = new Date(d.createdAt);
-        
-        const afterStart = dataInicio ? dataDemanda >= dataInicio : true;
-        const beforeEnd = dataFim ? dataDemanda <= dataFim : true;
-        
-        return afterStart && beforeEnd;
-      });
-    }
-
-    this.demandasFiltradas = demandasResultantes;
-    this.paginaAtual = 1;
-  }
-  
-  limparFiltros(): void {
-    this.filtros = {
-      funcionarioId: 'todos',
-      prioridade: 'todas',
-      dataInicio: '',
-      dataFim: ''
-    };
-    this.aplicarFiltros();
-  }
-
   getNomeAbreviado(name: string | null | undefined): string {
     if (!name) return 'N/A';
     const nome = name.split('@')[0];
     return nome.charAt(0).toUpperCase() + nome.slice(1);
   }
 }
-
