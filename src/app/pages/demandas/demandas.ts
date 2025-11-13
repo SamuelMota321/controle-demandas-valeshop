@@ -5,18 +5,19 @@ import { ToastrService } from 'ngx-toastr';
 import { ContainerModule } from '../../components/container/container.module';
 import { PainelService } from '../../services/painel.service';
 import { AuthService } from '../../services/auth.service';
-// Importa o forkJoin para carregar múltiplos dados
+// Importa o Observable, Subscription, forkJoin e of
 import { Observable, of, Subscription, forkJoin } from 'rxjs';
 import { ConfirmationModal } from './confirmation-modal/confirmation-modal';
 import { take, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { ReplacePipe } from '../../util/replace.pipe';
 
+// Adicionando interface User para garantir a tipagem correta
 interface User {
   id: number;
   email: string;
-  userType: string;
 }
+
 @Component({
   selector: 'app-demandas',
   standalone: true,
@@ -36,7 +37,7 @@ export class Demandas implements OnInit, OnDestroy {
   demandas: any[] = [];
   demandasFiltradas: any[] = [];
   demandasPaginadas: any[] = [];
-  usuarios: User[] = []; // Agora 'User' está definido
+  usuarios: User[] = []; 
   termoBusca = '';
   isLoading = true;
   isModalOpen = false;
@@ -68,7 +69,7 @@ export class Demandas implements OnInit, OnDestroy {
       take(1) 
     ).subscribe(user => {
       this.isAdmin = user?.userType?.toLowerCase() === 'administrador';
-      this.loadDadosIniciais(); // Renomeado para carregar tudo
+      this.loadDadosIniciais(); // Chama a nova função de carregamento
     });
   }
 
@@ -78,58 +79,45 @@ export class Demandas implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Lógica de carregamento de dados unificada com forkJoin, 
+   * inspirada no dashboard.ts.
+   */
   loadDadosIniciais(): void {
     this.isLoading = true;
 
-    // Determina qual observable de demandas usar
-    const demandas$ = this.isAdmin
-      ? this.painelService.getAllDemandRecord()
-      : this.painelService.getUserAllDemandRecord();
-
-    // Carrega as demandas primeiro
-    demandas$.subscribe({
-      next: (demandasData) => {
-        this.demandas = demandasData || [];
+    // Define quais observables serão chamados com base no tipo de usuário
+    const observables: { demandas: Observable<any>, usuarios: Observable<any> } = {
+      demandas: this.isAdmin
+        ? this.painelService.getAllDemandRecord()
+        : this.painelService.getUserAllDemandRecord(),
         
-        // Se for admin, carrega os usuários separadamente.
-        if (this.isAdmin) {
-          this.loadUsuarios();
-        } else {
-          // Se não for admin, não precisa esperar usuários, aplica filtros e para o loading.
-          this.aplicarTodosFiltros();
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
+      usuarios: this.isAdmin
+        ? this.painelService.getAllUsers()
+        : of([]) // Se não for admin, retorna um observable com um array vazio
+    };
+
+    // Usa forkJoin para esperar que ambos os observables terminem
+    forkJoin(observables).subscribe({
+      next: ({ demandas, usuarios }) => {
+        this.demandas = demandas || [];
+        this.usuarios = usuarios || []; // Popula os usuários (seja a lista de admin ou o array vazio)
+        
+        this.aplicarTodosFiltros(); // Agora isso é seguro, pois this.usuarios está definido
+        
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
-        this.toastr.error('Erro ao carregar demandas.', 'Erro');
+        this.toastr.error('Erro ao carregar dados da página.', 'Erro');
+        console.error(err); // Loga o erro para depuração
         this.cdr.detectChanges();
       }
     });
   }
 
-  // Função separada para carregar usuários (apenas admin)
-  loadUsuarios(): void {
-    this.painelService.getAllUsers().subscribe({
-      next: (usuariosData) => {
-        this.usuarios = usuariosData || [];
-      },
-      error: (err) => {
-        // Se falhar, avisa o admin mas não impede a exibição das demandas
-        this.toastr.error('Erro ao carregar lista de funcionários. O filtro de funcionário pode não funcionar.', 'Aviso');
-        this.usuarios = []; // Garante que esteja vazio em caso de erro
-      },
-      complete: () => {
-        // Quando os usuários terminarem (com sucesso ou erro),
-        // aplica os filtros e para o loading.
-        this.aplicarTodosFiltros();
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
+  // A função loadUsuarios() foi removida pois agora está integrada em loadDadosIniciais()
 
   /**
    * Função central que aplica AMBOS os filtros (admin e barra de busca)
@@ -140,6 +128,7 @@ export class Demandas implements OnInit, OnDestroy {
     // 1. Aplica Filtros de Admin (se for admin)
     if (this.isAdmin) {
       // Filtro de Funcionário
+      // A verificação this.usuarios.length > 0 é crucial aqui
       if (this.filtros.funcionarioId !== 'todos' && this.usuarios.length > 0) {
         const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
         if (selectedUser) {
@@ -275,7 +264,6 @@ export class Demandas implements OnInit, OnDestroy {
         // Re-aplica os filtros para atualizar a visualização
         this.aplicarTodosFiltros(); 
         this.fecharModal();
-        // O cdr.detectChanges() já é chamado no final de aplicarTodosFiltros
       },
       error: (err) => {
         this.toastr.error('Erro ao excluir a demanda.', 'Erro');
