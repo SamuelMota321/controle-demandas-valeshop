@@ -16,6 +16,7 @@ import { ReplacePipe } from '../../util/replace.pipe';
 interface User {
   id: number;
   email: string;
+  userType?: string; // Adicionando userType aqui
 }
 
 @Component({
@@ -65,11 +66,17 @@ export class Demandas implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.authSubscription = this.authService.user$.pipe(
-      filter(user => user !== null), 
-      take(1) 
+      filter(user => user !== null), // Espera até que o usuário esteja carregado
+      take(1) // Pega apenas a primeira emissão
     ).subscribe(user => {
-      this.isAdmin = user?.userType?.toLowerCase() === 'administrador';
-      this.loadDadosIniciais(); // Chama a nova função de carregamento
+      // Verificação robusta do usuário e userType
+      if (user && user.userType) {
+        this.isAdmin = user.userType.toLowerCase() === 'administrador';
+      } else {
+        this.isAdmin = false;
+      }
+      
+      this.loadDadosIniciais(); // Chama a função de carregamento
     });
   }
 
@@ -111,13 +118,11 @@ export class Demandas implements OnInit, OnDestroy {
       error: (err) => {
         this.isLoading = false;
         this.toastr.error('Erro ao carregar dados da página.', 'Erro');
-        console.error(err); // Loga o erro para depuração
+        console.error('DemandasComponent: Erro no forkJoin:', err); 
         this.cdr.detectChanges();
       }
     });
   }
-
-  // A função loadUsuarios() foi removida pois agora está integrada em loadDadosIniciais()
 
   /**
    * Função central que aplica AMBOS os filtros (admin e barra de busca)
@@ -128,7 +133,6 @@ export class Demandas implements OnInit, OnDestroy {
     // 1. Aplica Filtros de Admin (se for admin)
     if (this.isAdmin) {
       // Filtro de Funcionário
-      // A verificação this.usuarios.length > 0 é crucial aqui
       if (this.filtros.funcionarioId !== 'todos' && this.usuarios.length > 0) {
         const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
         if (selectedUser) {
@@ -175,11 +179,10 @@ export class Demandas implements OnInit, OnDestroy {
     this.demandasFiltradas = demandasResultantes;
     this.paginaAtual = 1; 
     this.atualizarPaginacao();
-    this.cdr.detectChanges(); // Garante que a UI atualize após filtros
+    this.cdr.detectChanges(); 
   }
 
   /**
-   * Esta função agora apenas chama a função central
    * (acionada pela barra de busca)
    */
   filtrarDemandas(): void {
@@ -187,7 +190,6 @@ export class Demandas implements OnInit, OnDestroy {
   }
   
   /**
-   * Esta função agora apenas chama a função central
    * (acionada pelo botão "Aplicar")
    */
   aplicarFiltros(): void {
@@ -204,7 +206,6 @@ export class Demandas implements OnInit, OnDestroy {
       dataInicio: '',
       dataFim: ''
     };
-    // Re-aplica os filtros (que agora só incluirão a barra de busca, se houver)
     this.aplicarTodosFiltros();
   }
 
@@ -257,11 +258,9 @@ export class Demandas implements OnInit, OnDestroy {
     this.painelService.deleteDemand(this.demandaParaExcluir).subscribe({
       next: () => {
         this.toastr.success('Demanda excluída com sucesso!', 'Sucesso');
-        // Remove a demanda da lista principal
         this.demandas = this.demandas.filter(
           (d) => d.id !== this.demandaParaExcluir
         );
-        // Re-aplica os filtros para atualizar a visualização
         this.aplicarTodosFiltros(); 
         this.fecharModal();
       },

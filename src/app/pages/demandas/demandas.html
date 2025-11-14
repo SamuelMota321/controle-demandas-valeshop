@@ -1,5 +1,5 @@
-<!-- @if(isAdmin) { -->
-<!-- <div class="filtros-container">
+@if(isAdmin) {
+<div class="filtros-container">
   <div class="filtro-item">
     <select [(ngModel)]="filtros.funcionarioId">
       <option value="todos">Todos Funcionários</option>
@@ -34,7 +34,7 @@
   <button class="btn btn-aplicar" (click)="aplicarFiltros()">Aplicar</button>
   <button class="btn btn-limpar" (click)="limparFiltros()">Limpar Filtro</button>
 </div>
-} -->
+}
 
 
 <div class="search-bar">
