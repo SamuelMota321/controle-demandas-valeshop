@@ -66,8 +66,8 @@ export class Demandas implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.authSubscription = this.authService.user$.pipe(
-      filter(user => user !== null), // Espera até que o usuário esteja carregado
-      take(1) // Pega apenas a primeira emissão
+      filter(user => user !== null), 
+      take(1) 
     ).subscribe(user => {
       // Verificação robusta do usuário e userType
       if (user && user.userType) {

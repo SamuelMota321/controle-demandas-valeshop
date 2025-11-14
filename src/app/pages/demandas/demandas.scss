@@ -55,6 +55,33 @@
   outline: none;
 }
 
+
+.btn {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+
+  &-aplicar {
+    background-color: #00569e;
+    color: white;
+    &:hover {
+      background-color: #004075;
+    }
+  }
+
+  &-limpar {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+}
+
 .demanda-card {
   padding: 16px;
   font-family: Arial, sans-serif;
