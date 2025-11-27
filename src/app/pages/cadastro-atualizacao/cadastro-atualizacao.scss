@@ -1,6 +1,6 @@
 .cadastroDemanda-form {
   max-width: 900px;
-  margin: 0 auto; /* centraliza dentro do app-container */
+  margin: 0 auto;
 }
 
 .cadastroDemanda-form h2 {
@@ -11,6 +11,9 @@
   font-family: Arial, sans-serif;
 }
 
+.red{ 
+  color: red;
+}
 .cadastroDemanda-form .descricao {
   text-align: center;
   font-size: 0.9rem;
@@ -41,25 +44,56 @@
   border-radius: 30px;
   font-size: 0.95rem;
   background: #E5E5E5;
-  box-sizing: border-box; /* Garante que padding não afete a largura final */
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    border-color: #00569E;
+    outline: none;
+  }
+
+  &.invalid {
+    border-color: #d32f2f;
+    background-color: #fff8f8;
+  }
 }
 
 .cadastroDemanda-form textarea {
   min-height: 120px;
-  resize: none;
+  resize: vertical;
   border-radius: 15px;
 }
 
 .cadastroDemanda-form .linha {
-  display: grid; /* Alterado para grid para melhor alinhamento */
-  grid-template-columns: 1fr 1fr; /* Cria duas colunas de largura igual */
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
   gap: 1rem;
   margin-top: 1rem;
 }
 
-.cadastroDemanda-form .campo {
+.cadastroDemanda-form .campo, .cadastroDemanda-form .campo-container {
   display: flex;
   flex-direction: column;
+}
+
+.relative-container {
+  position: relative;
+}
+
+.char-counter {
+  align-self: flex-end; 
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.2rem;
+  margin-right: 0.5rem; 
+}
+
+.error-msg {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  margin-left: 0.5rem;
+  font-weight: bold;
 }
 
 .cadastroDemanda-form button {
@@ -72,12 +106,16 @@
   border-radius: 30px;
   cursor: pointer;
   font-family: Arial, sans-serif;
+  transition: opacity 0.3s;
+
+  &:hover {
+    opacity: 0.9;
+  }
 }
 
 @media (max-width: 768px) {
   .cadastroDemanda-form .linha {
-    grid-template-columns: 1fr; // Empilha as colunas
-    gap: 0; // Remove o espaçamento quando empilhado
+    grid-template-columns: 1fr; 
+    gap: 0; 
   }
 }
-

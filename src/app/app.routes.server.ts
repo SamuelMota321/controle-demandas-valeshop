@@ -1,7 +1,6 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  // ⚠️ Primeiro: regra coringa vem antes, para SSR normal
   {
     path: '**',
     renderMode: RenderMode.Server,
