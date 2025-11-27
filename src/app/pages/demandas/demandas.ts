@@ -5,18 +5,16 @@ import { ToastrService } from 'ngx-toastr';
 import { ContainerModule } from '../../components/container/container.module';
 import { PainelService } from '../../services/painel.service';
 import { AuthService } from '../../services/auth.service';
-// Importa o Observable, Subscription, forkJoin e of
 import { Observable, of, Subscription, forkJoin } from 'rxjs';
 import { ConfirmationModal } from './confirmation-modal/confirmation-modal';
 import { take, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { ReplacePipe } from '../../util/replace.pipe';
 
-// Adicionando interface User para garantir a tipagem correta
 interface User {
   id: number;
   email: string;
-  userType?: string; // Adicionando userType aqui
+  userType?: string; 
 }
 
 @Component({
@@ -69,14 +67,13 @@ export class Demandas implements OnInit, OnDestroy {
       filter(user => user !== null), 
       take(1) 
     ).subscribe(user => {
-      // Verificação robusta do usuário e userType
       if (user && user.userType) {
         this.isAdmin = user.userType.toLowerCase() === 'administrador';
       } else {
         this.isAdmin = false;
       }
       
-      this.loadDadosIniciais(); // Chama a função de carregamento
+      this.loadDadosIniciais(); 
     });
   }
 
@@ -86,14 +83,9 @@ export class Demandas implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Lógica de carregamento de dados unificada com forkJoin, 
-   * inspirada no dashboard.ts.
-   */
   loadDadosIniciais(): void {
     this.isLoading = true;
 
-    // Define quais observables serão chamados com base no tipo de usuário
     const observables: { demandas: Observable<any>, usuarios: Observable<any> } = {
       demandas: this.isAdmin
         ? this.painelService.getAllDemandRecord()
@@ -101,16 +93,15 @@ export class Demandas implements OnInit, OnDestroy {
         
       usuarios: this.isAdmin
         ? this.painelService.getAllUsers()
-        : of([]) // Se não for admin, retorna um observable com um array vazio
+        : of([]) 
     };
 
-    // Usa forkJoin para esperar que ambos os observables terminem
     forkJoin(observables).subscribe({
       next: ({ demandas, usuarios }) => {
         this.demandas = demandas || [];
-        this.usuarios = usuarios || []; // Popula os usuários (seja a lista de admin ou o array vazio)
+        this.usuarios = usuarios || [];
         
-        this.aplicarTodosFiltros(); // Agora isso é seguro, pois this.usuarios está definido
+        this.aplicarTodosFiltros();
         
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -124,15 +115,10 @@ export class Demandas implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Função central que aplica AMBOS os filtros (admin e barra de busca)
-   */
   aplicarTodosFiltros(): void {
     let demandasResultantes = [...this.demandas];
 
-    // 1. Aplica Filtros de Admin (se for admin)
     if (this.isAdmin) {
-      // Filtro de Funcionário
       if (this.filtros.funcionarioId !== 'todos' && this.usuarios.length > 0) {
         const selectedUser = this.usuarios.find(u => u.id === Number(this.filtros.funcionarioId));
         if (selectedUser) {
@@ -141,7 +127,6 @@ export class Demandas implements OnInit, OnDestroy {
         }
       }
 
-      // Filtro de Prioridade
       if (this.filtros.prioridade !== 'todas') {
         demandasResultantes = demandasResultantes.filter(d => d.priority === Number(this.filtros.prioridade));
       }
@@ -165,7 +150,6 @@ export class Demandas implements OnInit, OnDestroy {
       }
     }
     
-    // 2. Aplica Filtro da Barra de Busca (para todos)
     const termo = this.termoBusca.toLowerCase();
     if (termo) {
       demandasResultantes = demandasResultantes.filter(demanda =>
@@ -175,30 +159,20 @@ export class Demandas implements OnInit, OnDestroy {
       );
     }
 
-    // Atualiza a lista final e a paginação
     this.demandasFiltradas = demandasResultantes;
     this.paginaAtual = 1; 
     this.atualizarPaginacao();
     this.cdr.detectChanges(); 
   }
 
-  /**
-   * (acionada pela barra de busca)
-   */
   filtrarDemandas(): void {
     this.aplicarTodosFiltros();
   }
   
-  /**
-   * (acionada pelo botão "Aplicar")
-   */
   aplicarFiltros(): void {
     this.aplicarTodosFiltros();
   }
   
-  /**
-   * Limpa os filtros de admin e reaplica a lógica
-   */
   limparFiltros(): void {
     this.filtros = {
       funcionarioId: 'todos',

@@ -208,30 +208,6 @@
   cursor: not-allowed;
 }
 
-.status-badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: #fff;
-
-  &.status-iniciada {
-    background-color: #007bff;
-  }
-
-  &.status-autorizada-para-produção {
-    background-color: #ffc107;
-    color: #333
-  }
-
-  &.status-liberada-para-teste {
-    background-color: #17a2b8;
-  }
-
-  &.status-concluída {
-    background-color: #28a745;
-  }
-}
 
 @media (max-width: 768px) {
   .search-bar {
