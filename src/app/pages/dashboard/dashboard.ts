@@ -18,23 +18,22 @@ import { forkJoin } from 'rxjs';
 })
 export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('demandasPorFuncionarioChart') private demandasPorFuncionarioChartRef!: ElementRef;
-  @ViewChild('atrasoDeDemandasChart') private atrasoDeDemandasChartRef!: ElementRef;
+  @ViewChild('totalDemandasPorPeriodoChart') private totalDemandasPorPeriodoChartRef!: ElementRef;
 
-  demandas: Demanda[] = [];
-  usuarios: User[] = [];
-  demandasFiltradas: Demanda[] = [];
-  demandasPaginadas: Demanda[] = [];
+  demandas: any[] = [];
+  usuarios: any[] = [];
+  demandasFiltradas: any[] = [];
+  demandasPaginadas: any[] = [];
 
   totalDemandasAtivas = 0;
   demandasConcluidas = 0;
-  demandasAtrasadas = 0;
   tempoMedioResolucaoGeral: number = 0;
   tempoMedioPorUsuario: { nome: string, tempoMedio: number }[] = [];
   funcionarioComMaisDemandas = { nome: 'N/A', quantidade: 0 };
   resumoTexto = '';
 
   demandasPorFuncionarioChart: Chart | undefined;
-  atrasoDeDemandasChart: Chart | undefined;
+  totalDemandasPorPeriodoChart: Chart | undefined;
 
   filtros = {
     funcionarioId: 'todos',
@@ -59,12 +58,12 @@ export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Intencionalmente deixado em branco. A renderização dos gráficos é tratada após os dados serem carregados.
+    // Intencionalmente deixado em branco.
   }
 
   ngOnDestroy(): void {
     this.demandasPorFuncionarioChart?.destroy();
-    this.atrasoDeDemandasChart?.destroy();
+    this.totalDemandasPorPeriodoChart?.destroy();
   }
 
   carregarDados(): void {
@@ -171,16 +170,10 @@ export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private calcularEstatisticas(): void {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
     this.totalDemandasAtivas = this.demandasFiltradas.filter(d => d.status !== 'Concluída').length;
     this.demandasConcluidas = this.demandasFiltradas.filter(d => d.status === 'Concluída').length;
-    this.demandasAtrasadas = this.demandasFiltradas.filter(d => {
-      const prazo = new Date(d.date);
-      prazo.setHours(0,0,0,0);
-      return d.status !== 'Concluída' && prazo < hoje;
-    }).length;
+    
+    // Removido cálculo de demandas atrasadas
 
     this.calcularTempoMedioResolucao();
 
@@ -275,20 +268,21 @@ export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
   private gerarResumoTexto(): void {
     const nome = this.funcionarioComMaisDemandas.nome;
     const qtd = this.funcionarioComMaisDemandas.quantidade;
-    this.resumoTexto = `Hoje temos ${this.totalDemandasAtivas} demandas ativas, ${this.demandasAtrasadas} atrasadas e ${nome} é o funcionário com mais demandas (${qtd}).`;
+    // Texto de resumo atualizado sem a parte de atrasadas
+    this.resumoTexto = `Hoje temos ${this.totalDemandasAtivas} demandas ativas, ${this.demandasConcluidas} concluídas e ${nome} é o funcionário com mais demandas (${qtd}).`;
   }
 
   private atualizarGraficos(): void {
     if (this.demandasPorFuncionarioChart) {
       this.demandasPorFuncionarioChart.destroy();
     }
-    if (this.atrasoDeDemandasChart) {
-      this.atrasoDeDemandasChart.destroy();
+    if (this.totalDemandasPorPeriodoChart) {
+      this.totalDemandasPorPeriodoChart.destroy();
     }
 
     setTimeout(() => {
         this.criarGraficoDemandasPorFuncionario();
-        this.criarGraficoAtrasoDeDemandas();
+        this.criarGraficoTotalDemandasPorPeriodo();
     }, 100);
   }
 
@@ -339,31 +333,37 @@ export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  private criarGraficoAtrasoDeDemandas(): void {
-    if (!this.atrasoDeDemandasChartRef) return;
+  private criarGraficoTotalDemandasPorPeriodo(): void {
+    if (!this.totalDemandasPorPeriodoChartRef) return;
   
-    const atrasosPorMes: { [key: string]: number } = {};
-    const hoje = new Date();
+    const totalPorMes: { [key: string]: number } = {};
+    
+    // Ordena as demandas por data de criação para garantir a ordem cronológica no gráfico
+    const demandasOrdenadas = [...this.demandasFiltradas].sort((a, b) => {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
   
-    this.demandasFiltradas
-      .filter(d => new Date(d.date) < hoje && d.status !== 'Concluída')
-      .forEach(demanda => {
-        const mesAno = new Date(demanda.createdAt).toLocaleString('default', { month: 'short', year: '2-digit' });
-        atrasosPorMes[mesAno] = (atrasosPorMes[mesAno] || 0) + 1;
-      });
+    demandasOrdenadas.forEach(demanda => {
+        // Usa a data de criação para agrupar
+        const dataCriacao = new Date(demanda.createdAt);
+        if(!isNaN(dataCriacao.getTime())) {
+            const mesAno = dataCriacao.toLocaleString('default', { month: 'short', year: '2-digit' });
+            totalPorMes[mesAno] = (totalPorMes[mesAno] || 0) + 1;
+        }
+    });
   
-    const labels = Object.keys(atrasosPorMes);
-    const data = Object.values(atrasosPorMes);
+    const labels = Object.keys(totalPorMes);
+    const data = Object.values(totalPorMes);
   
-    this.atrasoDeDemandasChart = new Chart(this.atrasoDeDemandasChartRef.nativeElement, {
+    this.totalDemandasPorPeriodoChart = new Chart(this.totalDemandasPorPeriodoChartRef.nativeElement, {
       type: 'bar',
       data: {
         labels: labels,
         datasets: [{
-          label: 'Demandas Atrasadas',
+          label: 'Total de Demandas',
           data: data,
-          backgroundColor: 'rgba(211, 47, 47, 0.6)',
-          borderColor: 'rgba(211, 47, 47, 1)',
+          backgroundColor: 'rgba(40, 167, 69, 0.6)', // Cor verde para representar "Total" ou "Crescimento"
+          borderColor: 'rgba(40, 167, 69, 1)',
           borderWidth: 1
         }]
       },
@@ -394,4 +394,3 @@ export class Dashboard implements OnInit, OnDestroy, AfterViewInit {
     return nome.charAt(0).toUpperCase() + nome.slice(1);
   }
 }
-

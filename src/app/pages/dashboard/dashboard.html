@@ -49,10 +49,7 @@
       <div class="card-titulo">Demandas Concluídas</div>
       <div class="card-valor">{{ demandasConcluidas }}</div>
     </div>
-    <div class="card">
-      <div class="card-titulo">Demandas Atrasadas</div>
-      <div class="card-valor">{{ demandasAtrasadas }}</div>
-    </div>
+    <!-- Card de Demandas Atrasadas removido -->
     <div class="card">
       <div class="card-titulo">Tempo Médio de Resolução</div>
       <div class="card-valor">{{ tempoMedioResolucaoGeral | number:'1.0-1' }} <span class="card-unidade">dias</span></div>
@@ -79,9 +76,10 @@
       </div>
     </div>
     <div class="grafico-card">
-      <h3 class="grafico-titulo">Atraso de demandas por período</h3>
+      <h3 class="grafico-titulo">Total de demandas por período</h3>
       <div class="grafico-wrapper">
-        <canvas #atrasoDeDemandasChart></canvas>
+        <!-- Canvas atualizado para o novo gráfico -->
+        <canvas #totalDemandasPorPeriodoChart></canvas>
       </div>
     </div>
   </div>
