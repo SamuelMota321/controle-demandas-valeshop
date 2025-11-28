@@ -84,7 +84,7 @@ export class Login implements OnInit, OnDestroy {
         console.error("Erro no login:", err);
         if (err.error?.message === "Usuário desabilitado") {
           this.errorMessage = 'Sua conta está desabilitada. Por favor, verifique seu e-mail ou contate o suporte.';
-        } else if (err.status === 401 || err.status === 400) {
+        } else if (err.status === 401 || err.status === 400 || err.status === 409) {
            this.errorMessage = 'Email ou senha inválidos. Por favor, tente novamente.';
         } else {
            this.errorMessage = 'Ocorreu um erro inesperado. Tente novamente mais tarde.';

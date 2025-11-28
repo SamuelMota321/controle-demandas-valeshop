@@ -52,7 +52,7 @@
     <!-- Card de Demandas Atrasadas removido -->
     <div class="card">
       <div class="card-titulo">Tempo Médio de Resolução</div>
-      <div class="card-valor">{{ tempoMedioResolucaoGeral | number:'1.0-1' }} <span class="card-unidade">dias</span></div>
+      <div class="card-valor">{{ (tempoMedioResolucaoGeral * 8) | number:'1.0-1' }} <span class="card-unidade"> Horas</span></div>
     </div>
     <div class="card card-funcionario">
       <div class="card-titulo">Funcionário com mais demandas</div>
@@ -143,7 +143,7 @@
         @for(item of tempoMedioPorUsuario; track item.nome) {
           <tr>
             <td>{{ item.nome }}</td>
-            <td>{{ item.tempoMedio | number:'1.0-1' }}</td>
+            <td>{{ (item.tempoMedio * 8) | number:'1.0-1' }}</td>
           </tr>
         } @empty {
           <tr>
