@@ -38,23 +38,10 @@
         </div>
 
         <div class="campo">
-          <label>Prazo <span class="red">*</span></label>
-          <input 
-            type="date" 
-            formControlName="date"
-            [class.invalid]="hasError('date')">
-          @if (hasError('date'); as error) {
-            <div class="error-msg">{{ error }}</div>
-          }
-        </div>
-      </div>
-
-      <div class="linha">
-        <div class="campo" style="grid-column: span 2;">
           <label>Link do GitLab <span class="red">*</span></label>
           <input 
             type="text" 
-            placeholder="Cole o link do GitLab " 
+            placeholder="Cole o link do GitLab (opcional) " 
             formControlName="gitLink"
             [class.invalid]="hasError('gitLink')">
           @if (hasError('gitLink'); as error) {

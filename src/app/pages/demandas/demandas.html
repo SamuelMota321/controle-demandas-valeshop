@@ -66,9 +66,10 @@
       <span>Status: <span class="status-badge status-{{demanda.status | lowercase | replace: ' ': '-'}}">{{
           demanda.status }}</span></span>
       <span>Criada em: <b>{{ demanda.createdAt | date : 'dd/MM/yyyy' }}</b></span>
-      <span>Prazo: <b>{{ demanda.date | date : 'dd/MM/yyyy' }}</b></span>
       <span>Responsável: <b>{{ demanda.owner | titlecase }}</b></span>
-      <span>Gitlab Link: <a href="{{ demanda.gitLink }}" target="_blank"> Acessar </a></span>
+      @if (demanda.gitLink) {
+        <span>Gitlab Link: <a href="{{ demanda.gitLink }}" target="_blank"> Acessar </a></span>
+      }
     </div>
     <p class="demanda-desc">
       {{ demanda.description }}
