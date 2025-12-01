@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment'; 
+import { environment } from '../../../environments/environments_dev'; 
 
 @Component({
   selector: 'app-login',
