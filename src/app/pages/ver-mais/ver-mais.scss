@@ -25,6 +25,8 @@ app-container {
       margin: 0;
       font-size: 1.8rem;
     }
+
+
   }
 
   .info-grid {
@@ -40,7 +42,7 @@ app-container {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      flex-wrap: wrap; // Permite que o conteúdo quebre a linha se necessário
+      flex-wrap: wrap;
 
       b {
         color: #000;
@@ -50,18 +52,19 @@ app-container {
     a {
       color: #00569e;
       text-decoration: none;
-      word-break: break-all; // Quebra links longos
+      word-break: break-all;
+
       &:hover {
         text-decoration: underline;
       }
     }
-    
+
     .owner-edit-container {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
     }
-  
+
     .owner-select {
       padding: 0.3rem 0.5rem;
       border-radius: 6px;
@@ -73,7 +76,7 @@ app-container {
       max-height: 150px;
       overflow-y: auto;
     }
-  
+
     .btn-salvar-dono {
       background-color: #28a745;
       color: white;
@@ -83,18 +86,23 @@ app-container {
       cursor: pointer;
       font-size: 0.8rem;
       font-weight: bold;
+
       &:hover {
         background-color: #218838;
       }
     }
+
+
   }
 
   .descricao {
     margin-bottom: 2rem;
+
     h3 {
       margin-top: 0;
       margin-bottom: 0.5rem;
     }
+
     p {
       line-height: 1.6;
       color: #555;
@@ -108,6 +116,7 @@ app-container {
   align-items: center;
   margin-bottom: 1rem;
   font-family: Arial, sans-serif;
+
   h3 {
     margin: 0;
     font-size: 1.4rem;
@@ -129,6 +138,7 @@ app-container {
 
 .btn-voltar {
   background: #6c757d;
+
   &:hover {
     background: #5a6268;
   }
@@ -180,6 +190,7 @@ app-container {
     .btn-salvar {
       background-color: #28a745;
       color: white;
+
       &:hover {
         background-color: #218838;
       }
@@ -188,10 +199,13 @@ app-container {
     .btn-cancelar {
       background: #ccc;
       color: black;
+
       &:hover {
         background-color: #b3b3b3;
       }
     }
+
+
   }
 }
 
@@ -203,13 +217,29 @@ app-container {
   margin-bottom: 0.8rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   font-family: Arial, sans-serif;
 
-  p {
-    margin: 0;
+  .conteudo-item {
     flex: 1;
-    word-break: break-word;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    p {
+      margin: 0;
+      word-break: break-word;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .data-registro {
+      font-size: 0.75rem;
+      color: #888;
+      font-style: italic;
+    }
+
+
   }
 
   .item-actions {
@@ -217,11 +247,7 @@ app-container {
     align-items: center;
     gap: 1rem;
     margin-left: 1rem;
-  }
-
-  .data {
-    font-size: 0.8rem;
-    color: #555;
+    margin-top: 0.2rem;
   }
 
   .btn-editar {
@@ -231,6 +257,7 @@ app-container {
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: bold;
+
     &:hover {
       text-decoration: underline;
     }
@@ -243,6 +270,7 @@ app-container {
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: bold;
+
     &:hover {
       text-decoration: underline;
     }
@@ -263,6 +291,7 @@ app-container {
       align-items: flex-start;
       gap: 0.5rem;
     }
+
     .info-grid {
       grid-template-columns: 1fr;
     }
@@ -286,4 +315,3 @@ app-container {
     }
   }
 }
-

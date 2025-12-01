@@ -1,4 +1,8 @@
-interface Demanda {
+export interface DemandLogItem {
+  text: string;
+  createdAt: string;
+}
+export interface Demanda {
   id: number;
   title: string;
   priority: number;
@@ -9,7 +13,7 @@ interface Demanda {
   description: string;
   owner: string;
   gitLink: string;
-  problems: string[] | null;
-  observations: string[] | null;
-  comments: string[] | null;
+  problems: DemandLogItem[] | null;
+  observations: DemandLogItem[] | null;
+  comments: DemandLogItem[] | null;
 }

@@ -7,6 +7,7 @@ import { PainelService } from '../../services/painel.service';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../services/auth.service';
 import { ReplacePipe } from '../../util/replace.pipe';
+import { Demanda } from '../../interfaces/demand';
 
 @Component({
   selector: 'app-ver-mais',
@@ -16,7 +17,7 @@ import { ReplacePipe } from '../../util/replace.pipe';
   styleUrl: './ver-mais.scss',
 })
 export class VerMais implements OnInit {
-  demanda: any = null;
+  demanda: Demanda | null = null;
   isLoading = true;
   isAdmin = false;
   allUsers: any[] = [];
@@ -63,9 +64,8 @@ export class VerMais implements OnInit {
   loadAllUsers(): void {
     this.painelService.getAllUsers().subscribe({
       next: (users) => {
-        console.log('Usuários carregados:', users);
         this.allUsers = users.filter((user: { userType: string; }) => user.userType !== 'Administrador');
-        this.trySetSelectedOwner(); // Tenta definir o dono após os usuários carregarem
+        this.trySetSelectedOwner();
       },
       error: (err) => {
         this.toastr.error('Erro ao carregar a lista de usuários.', 'Erro');
@@ -78,10 +78,15 @@ export class VerMais implements OnInit {
     this.painelService.getDemandById(id).subscribe({
       next: (data) => {
         this.demanda = data;
-        this.trySetSelectedOwner(); // Tenta definir o dono após a demanda carregar
-        this.demanda.problems = this.demanda.problems || [];
-        this.demanda.observations = this.demanda.observations || [];
-        this.demanda.comments = this.demanda.comments || [];
+        this.trySetSelectedOwner();
+        
+        // Garante que as listas não sejam nulas
+        if (this.demanda) {
+          this.demanda.problems = this.demanda.problems || [];
+          this.demanda.observations = this.demanda.observations || [];
+          this.demanda.comments = this.demanda.comments || [];
+        }
+        
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -95,9 +100,8 @@ export class VerMais implements OnInit {
   }
 
   private trySetSelectedOwner(): void {
-    // Este método só vai funcionar quando tanto a demanda quanto a lista de usuários estiverem carregadas
     if (this.isAdmin && this.demanda && this.demanda.owner && this.allUsers && this.allUsers.length > 0) {
-      const ownerUser = this.allUsers.find(user => user.email.split('@')[0].toLowerCase() === this.demanda.owner.toLowerCase());
+      const ownerUser = this.allUsers.find(user => user.email.split('@')[0].toLowerCase() === this.demanda!.owner.toLowerCase());
       if (ownerUser) {
         this.selectedOwnerId = ownerUser.id;
         this.cdr.detectChanges();
@@ -114,7 +118,7 @@ export class VerMais implements OnInit {
       },
       error: (err) => {
         this.toastr.error('Erro ao atualizar a prioridade.', 'Erro');
-        this.loadDemanda(this.demanda.id); // Recarrega para reverter a mudança visual
+        this.loadDemanda(this.demanda!.id);
       },
     });
   }
@@ -132,13 +136,12 @@ export class VerMais implements OnInit {
         this.toastr.success('Dono da demanda atualizado com sucesso!', 'Sucesso!');
         const newOwner = this.allUsers.find(user => user.id === this.selectedOwnerId);
         if (newOwner) {
-            this.demanda.owner = newOwner.email.split('@')[0];
+            this.demanda!.owner = newOwner.email.split('@')[0];
         }
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.toastr.error('Erro ao atualizar o dono da demanda.', 'Erro');
-        console.error('Erro ao atualizar dono:', err);
       }
     });
   }
@@ -158,6 +161,7 @@ export class VerMais implements OnInit {
   ): void {
     if (!valor.trim() || !this.demanda) return;
 
+    // A API espera um array de strings no payload
     const data = { [tipo + 's']: [valor] };
 
     this.painelService
@@ -169,12 +173,15 @@ export class VerMais implements OnInit {
             `${tipoTraduzido} adicionado com sucesso!`,
             'Sucesso'
           );
+          
+          // Atualiza a demanda local com a resposta do servidor (que já traz os objetos com data)
           this.demanda = {
             ...updatedDemanda,
             problems: updatedDemanda.problems || [],
             observations: updatedDemanda.observations || [],
             comments: updatedDemanda.comments || [],
           };
+          
           this.resetarFormulario(tipo);
           this.cdr.detectChanges();
         },
@@ -186,21 +193,24 @@ export class VerMais implements OnInit {
   }
 
   iniciarEdicao(tipo: 'problem' | 'observation' | 'comment', index: number): void {
+    if (!this.demanda) return;
+
     this.abrirProblema = false;
     this.abrirObs = false;
     this.abrirComentario = false;
 
     this.itemEmEdicao = { tipo, index };
 
+    // Extrai apenas o texto do objeto para edição
     switch (tipo) {
       case 'problem':
-        this.valorEmEdicao = this.demanda.problems[index];
+        this.valorEmEdicao = this.demanda.problems![index].text;
         break;
       case 'observation':
-        this.valorEmEdicao = this.demanda.observations[index];
+        this.valorEmEdicao = this.demanda.observations![index].text;
         break;
       case 'comment':
-        this.valorEmEdicao = this.demanda.comments[index];
+        this.valorEmEdicao = this.demanda.comments![index].text;
         break;
     }
   }
@@ -223,7 +233,7 @@ export class VerMais implements OnInit {
   }
 
   atualizarItem(): void {
-    if (!this.itemEmEdicao || !this.valorEmEdicao.trim()) {
+    if (!this.itemEmEdicao || !this.valorEmEdicao.trim() || !this.demanda) {
       this.cancelarEdicao();
       return;
     }
@@ -231,8 +241,6 @@ export class VerMais implements OnInit {
     const { tipo, index } = this.itemEmEdicao;
     const data = { [tipo + 's']: [this.valorEmEdicao] };
     
-    console.log('Atualizando item:', { demandId: this.demanda.id, index, tipo, data });
-
     this.painelService
       .updateProblemObservationOrComment(this.demanda.id, index, data)
       .subscribe({
@@ -240,7 +248,12 @@ export class VerMais implements OnInit {
           const tipoTraduzido = this.traduzirTipo(tipo);
           this.toastr.success(`${tipoTraduzido} atualizado com sucesso!`, 'Sucesso');
 
-          this.demanda[tipo + 's'][index] = this.valorEmEdicao;
+          // Atualiza apenas o texto localmente, mantendo a data original
+          const lista = tipo + 's'; 
+          if (this.demanda && this.demanda[lista as keyof Demanda]) {
+             // @ts-ignore
+             this.demanda[lista][index].text = this.valorEmEdicao;
+          }
 
           this.cancelarEdicao();
           this.cdr.detectChanges();
@@ -248,7 +261,6 @@ export class VerMais implements OnInit {
         error: (err) => {
           const tipoTraduzido = this.traduzirTipo(tipo);
           this.toastr.error(`Erro ao atualizar ${tipoTraduzido.toLowerCase()}.`, 'Erro');
-          console.error(`Erro ao atualizar ${tipo}:`, err);
           this.cancelarEdicao();
         },
       });
@@ -257,44 +269,29 @@ export class VerMais implements OnInit {
   excluirItem(tipo: 'problem' | 'observation' | 'comment', index: number): void {
     if (this.demanda === null) return;
     
-    console.log('Tentando excluir item:', { demandId: this.demanda.id, index, tipo });
-
     let deleteObservable;
 
     switch (tipo) {
       case 'problem':
-        deleteObservable = this.painelService.deleteProblem(
-          this.demanda.id,
-          index
-        );
+        deleteObservable = this.painelService.deleteProblem(this.demanda.id, index);
         break;
       case 'observation':
-        deleteObservable = this.painelService.deleteObservation(
-          this.demanda.id,
-          index
-        );
+        deleteObservable = this.painelService.deleteObservation(this.demanda.id, index);
         break;
       case 'comment':
-        deleteObservable = this.painelService.deleteComment(
-          this.demanda.id,
-          index
-        );
+        deleteObservable = this.painelService.deleteComment(this.demanda.id, index);
         break;
     }
 
     deleteObservable.subscribe({
       next: () => {
         const tipoTraduzido = this.traduzirTipo(tipo);
-        this.toastr.success(
-          `${tipoTraduzido} excluído com sucesso!`,
-          'Sucesso'
-        );
-        this.loadDemanda(this.demanda.id);
+        this.toastr.success(`${tipoTraduzido} excluído com sucesso!`, 'Sucesso');
+        this.loadDemanda(this.demanda!.id);
       },
       error: (err) => {
         const tipoTraduzido = this.traduzirTipo(tipo);
         this.toastr.error(`Erro ao excluir ${tipoTraduzido.toLowerCase()}.`, 'Erro');
-        console.error(`Erro ao excluir ${tipo}:`, err);
       },
     });
   }
@@ -329,4 +326,3 @@ export class VerMais implements OnInit {
     this.router.navigate(['/demandas']);
   }
 }
-

@@ -1,18 +1,17 @@
 @if (isLoading) {
-<app-container>
-  <div class="loading-container">
-    <p>Carregando detalhes da demanda...</p>
-  </div>
-</app-container>
+  <app-container>
+    <div class="loading-container">
+      <p>Carregando detalhes da demanda...</p>
+    </div>
+  </app-container>
 } @else if (demanda) {
-
 
 <app-container>
   <div class="detalhes-demanda">
     <div class="header-actions">
       <h2>{{ demanda.title }}</h2>
       @if (!isAdmin) {
-      <button class="btn-acao btn-editar" (click)="editarDemanda()">Editar</button>
+        <button class="btn-acao btn-editar" (click)="editarDemanda()">Editar</button>
       }
     </div>
     <div class="info-grid">
@@ -30,9 +29,6 @@
       </p>
       <p>
         <b>Status:</b> <span class="status-badge status-{{demanda.status | lowercase | replace: ' ': '-'}}">{{ demanda.status }}</span>
-      </p>
-      <p>
-        <b>Prazo:</b> <span>{{ demanda.date | date : 'dd/MM/yyyy' }}</span>
       </p>
       <p>
         <b>Link GitLab:</b>
@@ -62,183 +58,188 @@
   </div>
 </app-container>
 
-
-
 <!-- Seção de Problemas -->
 <app-container>
   <div class="secao">
     <h3>Problemas</h3>
     @if(!isAdmin) {
-    <button class="btn-acao" (click)="abrirProblema = !abrirProblema" [disabled]="!!itemEmEdicao">
-      Adicionar
-    </button>
-  }
+      <button class="btn-acao" (click)="abrirProblema = !abrirProblema" [disabled]="!!itemEmEdicao">
+        Adicionar
+      </button>
+    }
   </div>
   @if (abrirProblema) {
-  <div class="box-add">
-    <textarea [(ngModel)]="novoProblema" placeholder="Descreva o problema"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="adicionarItem('problem', novoProblema)">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="abrirProblema = false; novoProblema = ''">
-        Cancelar
-      </button>
+    <div class="box-add">
+      <textarea [(ngModel)]="novoProblema" placeholder="Descreva o problema"></textarea>
+      <div>
+        <button class="btn-salvar" (click)="adicionarItem('problem', novoProblema)">
+          Salvar
+        </button>
+        <button class="btn-cancelar" (click)="abrirProblema = false; novoProblema = ''">
+          Cancelar
+        </button>
+      </div>
     </div>
-  </div>
-  } @for (problema of demanda.problems; track $index) {
-  <!-- VIEW MODE -->
-  @if (itemEmEdicao?.tipo !== 'problem' || itemEmEdicao?.index !== $index) {
-  <div class="item">
-    <p>{{ problema }}</p>
-    <div class="item-actions">
-      @if(!isAdmin) {
-      <button class="btn-editar" (click)="iniciarEdicaoProblema($index)">
-        Editar
-      </button>
-      <button class="btn-excluir" (click)="excluirItem('problem', $index)">
-        Excluir
-      </button>
-      }
-    </div>
-  </div>
-  }
+  } 
+  @for (problema of demanda.problems; track $index) {
+    <!-- VIEW MODE -->
+    @if (itemEmEdicao?.tipo !== 'problem' || itemEmEdicao?.index !== $index) {
+      <div class="item">
+        <div class="conteudo-item">
+          <p>{{ problema.text }}</p>
+          <span class="data-registro">{{ problema.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="item-actions">
+          @if(!isAdmin) {
+            <button class="btn-editar" (click)="iniciarEdicaoProblema($index)">
+              Editar
+            </button>
+            <button class="btn-excluir" (click)="excluirItem('problem', $index)">
+              Excluir
+            </button>
+          }
+        </div>
+      </div>
+    }
 
-  <!-- EDIT MODE -->
-  @if (itemEmEdicao?.tipo === 'problem' && itemEmEdicao?.index === $index) {
-  <div class="box-add">
-    <textarea [(ngModel)]="valorEmEdicao" placeholder="Descreva o problema"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="atualizarItem()">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="cancelarEdicao()">
-        Cancelar
-      </button>
-    </div>
-  </div>
-  }
+    <!-- EDIT MODE -->
+    @if (itemEmEdicao?.tipo === 'problem' && itemEmEdicao?.index === $index) {
+      <div class="box-add">
+        <textarea [(ngModel)]="valorEmEdicao" placeholder="Descreva o problema"></textarea>
+        <div>
+          <button class="btn-salvar" (click)="atualizarItem()">
+            Salvar
+          </button>
+          <button class="btn-cancelar" (click)="cancelarEdicao()">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
   } @empty {
-  <p class="empty-text">Nenhum problema registrado.</p>
+    <p class="empty-text">Nenhum problema registrado.</p>
   }
 </app-container>
-
-
 
 <!-- Seção de Observações -->
 <app-container>
   <div class="secao">
     <h3>Observações</h3>
     @if(!isAdmin) {
-    <button class="btn-acao" (click)="abrirObs = !abrirObs" [disabled]="!!itemEmEdicao">Adicionar</button>
+      <button class="btn-acao" (click)="abrirObs = !abrirObs" [disabled]="!!itemEmEdicao">Adicionar</button>
     }
   </div>
   @if (abrirObs) {
-  <div class="box-add">
-    <textarea [(ngModel)]="novaObs" placeholder="Escreva a observação"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="adicionarItem('observation', novaObs)">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="abrirObs = false; novaObs = ''">
-        Cancelar
-      </button>
+    <div class="box-add">
+      <textarea [(ngModel)]="novaObs" placeholder="Escreva a observação"></textarea>
+      <div>
+        <button class="btn-salvar" (click)="adicionarItem('observation', novaObs)">
+          Salvar
+        </button>
+        <button class="btn-cancelar" (click)="abrirObs = false; novaObs = ''">
+          Cancelar
+        </button>
+      </div>
     </div>
-  </div>
-  } @for (obs of demanda.observations; track $index) {
-  <!-- VIEW MODE -->
-  @if (itemEmEdicao?.tipo !== 'observation' || itemEmEdicao?.index !== $index) {
-  <div class="item">
-    <p>{{ obs }}</p>
-    <div class="item-actions">
-      @if(!isAdmin) {
-      <button class="btn-editar" (click)="iniciarEdicaoObservacao($index)">
-        Editar
-      </button>
-      <button class="btn-excluir" (click)="excluirItem('observation', $index)">
-        Excluir
-      </button>
-      }
-    </div>
-  </div>
-  }
-  <!-- EDIT MODE -->
-  @if (itemEmEdicao?.tipo === 'observation' && itemEmEdicao?.index === $index) {
-  <div class="box-add">
-    <textarea [(ngModel)]="valorEmEdicao" placeholder="Escreva a observação"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="atualizarItem()">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="cancelarEdicao()">
-        Cancelar
-      </button>
-    </div>
-  </div>
-  }
+  } 
+  @for (obs of demanda.observations; track $index) {
+    <!-- VIEW MODE -->
+    @if (itemEmEdicao?.tipo !== 'observation' || itemEmEdicao?.index !== $index) {
+      <div class="item">
+        <div class="conteudo-item">
+          <p>{{ obs.text }}</p>
+          <span class="data-registro">{{ obs.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="item-actions">
+          @if(!isAdmin) {
+            <button class="btn-editar" (click)="iniciarEdicaoObservacao($index)">
+              Editar
+            </button>
+            <button class="btn-excluir" (click)="excluirItem('observation', $index)">
+              Excluir
+            </button>
+          }
+        </div>
+      </div>
+    }
+    <!-- EDIT MODE -->
+    @if (itemEmEdicao?.tipo === 'observation' && itemEmEdicao?.index === $index) {
+      <div class="box-add">
+        <textarea [(ngModel)]="valorEmEdicao" placeholder="Escreva a observação"></textarea>
+        <div>
+          <button class="btn-salvar" (click)="atualizarItem()">
+            Salvar
+          </button>
+          <button class="btn-cancelar" (click)="cancelarEdicao()">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
   } @empty {
-  <p class="empty-text">Nenhuma observação registrada.</p>
+    <p class="empty-text">Nenhuma observação registrada.</p>
   }
 </app-container>
-
-
 
 <!-- Seção de Comentários -->
 <app-container>
   <div class="secao">
     <h3>Comentários</h3>
-
     @if(isAdmin) {
-    <button class="btn-acao" (click)="abrirComentario = !abrirComentario" [disabled]="!!itemEmEdicao">
-      Adicionar
-    </button>
+      <button class="btn-acao" (click)="abrirComentario = !abrirComentario" [disabled]="!!itemEmEdicao">
+        Adicionar
+      </button>
     }
   </div>
   @if (abrirComentario) {
-  <div class="box-add">
-    <textarea [(ngModel)]="novoComentario" placeholder="Escreva o comentário"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="adicionarItem('comment', novoComentario)">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="abrirComentario = false; novoComentario = ''">
-        Cancelar
-      </button>
+    <div class="box-add">
+      <textarea [(ngModel)]="novoComentario" placeholder="Escreva o comentário"></textarea>
+      <div>
+        <button class="btn-salvar" (click)="adicionarItem('comment', novoComentario)">
+          Salvar
+        </button>
+        <button class="btn-cancelar" (click)="abrirComentario = false; novoComentario = ''">
+          Cancelar
+        </button>
+      </div>
     </div>
-  </div>
-  } @for (comentario of demanda.comments; track $index) {
-  <!-- VIEW MODE -->
-  @if (itemEmEdicao?.tipo !== 'comment' || itemEmEdicao?.index !== $index) {
-  <div class="item">
-    <p>{{ comentario }}</p>
-    @if(isAdmin) {
-    <div class="item-actions">
-      <button class="btn-editar" (click)="iniciarEdicaoComentario($index)">
-        Editar
-      </button>
-      <button class="btn-excluir" (click)="excluirItem('comment', $index)">
-        Excluir
-      </button>
-    </div>
+  } 
+  @for (comentario of demanda.comments; track $index) {
+    <!-- VIEW MODE -->
+    @if (itemEmEdicao?.tipo !== 'comment' || itemEmEdicao?.index !== $index) {
+      <div class="item">
+        <div class="conteudo-item">
+          <p>{{ comentario.text }}</p>
+          <span class="data-registro">{{ comentario.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        @if(isAdmin) {
+          <div class="item-actions">
+            <button class="btn-editar" (click)="iniciarEdicaoComentario($index)">
+              Editar
+            </button>
+            <button class="btn-excluir" (click)="excluirItem('comment', $index)">
+              Excluir
+            </button>
+          </div>
+        }
+      </div>
     }
-  </div>
-  }
-  <!-- EDIT MODE -->
-  @if (itemEmEdicao?.tipo === 'comment' && itemEmEdicao?.index === $index) {
-  <div class="box-add">
-    <textarea [(ngModel)]="valorEmEdicao" placeholder="Escreva o comentário"></textarea>
-    <div>
-      <button class="btn-salvar" (click)="atualizarItem()">
-        Salvar
-      </button>
-      <button class="btn-cancelar" (click)="cancelarEdicao()">
-        Cancelar
-      </button>
-    </div>
-  </div>
-  }
+    <!-- EDIT MODE -->
+    @if (itemEmEdicao?.tipo === 'comment' && itemEmEdicao?.index === $index) {
+      <div class="box-add">
+        <textarea [(ngModel)]="valorEmEdicao" placeholder="Escreva o comentário"></textarea>
+        <div>
+          <button class="btn-salvar" (click)="atualizarItem()">
+            Salvar
+          </button>
+          <button class="btn-cancelar" (click)="cancelarEdicao()">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
   } @empty {
-  <p class="empty-text">Nenhum comentário registrado.</p>
+    <p class="empty-text">Nenhum comentário registrado.</p>
   }
 </app-container>
 }
